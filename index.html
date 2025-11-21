@@ -4,24 +4,293 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📝LeEu Notes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/6/69/Apple_Notes_icon.png" type="image/png">
 </head>
 <body>
 
-    <h1>LeEu Notes</h1>
-    <input type="text" placeholder="Type here">
+    <div class="container">
+        <h1>LeEu Notes</h1>
+
+        <!-- Toggle Dark Mode -->
+        <button id="toggleTheme" class="theme-toggle">🌙 Dark Mode</button>
+
+        <!-- Add Note Input -->
+        <textarea id="noteInput" placeholder="Type your note here..."></textarea>
+        <button id="addNoteBtn" class="add-note-btn">Add Note</button>
+
+        <!-- Notes Container -->
+        <div id="notesContainer"></div>
+    </div>
+
+<script>
+    let currentEditId = null;  // To store the ID of the note being edited
+
+    // Fetch stored notes from localStorage
+    function getStoredNotes() {
+        const notes = JSON.parse(localStorage.getItem('notes'));
+        return notes ? notes : [];
+    }
+
+    // Save notes to localStorage
+    function saveNotes(notes) {
+        localStorage.setItem('notes', JSON.stringify(notes));
+    }
+
+    // Create a new note and display it
+    function addNote() {
+        const noteText = document.getElementById('noteInput').value.trim();
+        if (noteText) {
+            const notes = getStoredNotes();
+            const newNote = {
+                id: Date.now(), // Use timestamp as unique ID
+                text: noteText
+            };
+
+            notes.push(newNote);
+            saveNotes(notes);
+            renderNotes();
+            document.getElementById('noteInput').value = ''; // Clear input field
+        }
+    }
+
+    // Edit an existing note
+    function editNote(noteId) {
+        const notes = getStoredNotes();
+        const note = notes.find(n => n.id === noteId);
+        if (note) {
+            currentEditId = noteId;  // Set the current note being edited
+            document.getElementById('noteInput').value = note.text;  // Pre-fill textarea with note's text
+            document.getElementById('addNoteBtn').textContent = "Save Changes"; // Change button to "Save"
+            document.getElementById('noteInput').style.backgroundColor = "#fff4b2"; // Yellow background for active note
+        }
+    }
+
+    // Save the edited note
+    function saveEditedNote() {
+        const noteText = document.getElementById('noteInput').value.trim();
+        if (noteText && currentEditId !== null) {
+            const notes = getStoredNotes();
+            const noteIndex = notes.findIndex(n => n.id === currentEditId);
+            if (noteIndex !== -1) {
+                notes[noteIndex].text = noteText;
+                saveNotes(notes);
+                renderNotes();
+                document.getElementById('noteInput').value = ''; // Clear input field
+                document.getElementById('addNoteBtn').textContent = "Add Note"; // Reset button text
+                document.getElementById('noteInput').style.backgroundColor = ""; // Reset background color
+                currentEditId = null; // Reset edit mode
+            }
+        }
+    }
+
+    // Delete a note
+    function deleteNote(noteId) {
+        const notes = getStoredNotes();
+        const updatedNotes = notes.filter(note => note.id !== noteId);
+        saveNotes(updatedNotes);
+        renderNotes();
+    }
+
+    // Render all notes
+    function renderNotes() {
+        const notes = getStoredNotes();
+        const notesContainer = document.getElementById('notesContainer');
+        notesContainer.innerHTML = ''; // Clear existing notes
+
+        // Loop through notes and display them
+        notes.forEach(note => {
+            const noteElement = document.createElement('div');
+            noteElement.classList.add('note');
+            noteElement.setAttribute('data-id', note.id);
+
+            // Add note content, edit and delete buttons
+            noteElement.innerHTML = `
+                <div class="note-text" onclick="editNote(${note.id})">${note.text}</div>
+                <button class="delete-btn" onclick="deleteNote(${note.id})">🗑️</button>
+            `;
+            notesContainer.appendChild(noteElement);
+        });
+    }
+
+    // Toggle Dark/Light Theme
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        document.getElementById('toggleTheme').textContent = isDark ? '🌞 Light Mode' : '🌙 Dark Mode';
+    }
+
+    // Initialize and render existing notes when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        renderNotes();
+    });
+
+    // Event listener for adding or saving a note
+    document.getElementById('addNoteBtn').addEventListener('click', function () {
+        if (currentEditId !== null) {
+            saveEditedNote(); // Save changes to an existing note
+        } else {
+            addNote(); // Add a new note
+        }
+    });
+
+    // Event listener for theme toggle button
+    document.getElementById('toggleTheme').addEventListener('click', toggleTheme);
+
+</script>
+
 <style>
-    h1{
+    /* General Reset */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: yellow;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        height: 100vh;
+        color: #333;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* Dark Theme Styling */
+    .dark-theme {
+        background-color: #2e2e2e;
+        color: #f7f8fa;
+    }
+
+    /* Container Styling */
+    .container {
+        width: 100%;
+        max-width: 1200px;
+        padding: 20px;
         text-align: center;
-        font-family: monospace;
     }
-    input{
-        font-size: 50px;
-      font-family: monospace;
+
+    h1 {
+        font-size: 2.8em;
+        margin-bottom: 20px;
+        color: #333;
     }
-    body{
-        background-color: yellow; 
+
+    /* Theme Toggle Button */
+    .theme-toggle {
+        background-color: #007aff;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin-bottom: 20px;
     }
-    
+
+    .theme-toggle:hover {
+        background-color: #005bb5;
+    }
+
+    /* Textarea */
+    textarea {
+        width: 80%;
+        max-width: 1000px;
+        height: 150px;
+        padding: 20px;
+        font-size: 1.5em;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        color: #333;
+        margin-bottom: 20px;
+        resize: none;
+        transition: border-color 0.3s ease;
+    }
+
+    /* Add Note Button */
+    .add-note-btn {
+        background-color: #007aff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1.2em;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .add-note-btn:hover {
+        background-color: #005bb5;
+    }
+
+    /* Notes Container */
+    #notesContainer {
+        width: 100%;
+        max-width: 1000px;
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        text-align: left;
+    }
+
+    /* Individual Note */
+    .note {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        position: relative;
+        transition: transform 0.3s ease-in-out;
+        cursor: pointer;
+    }
+
+    .note-text {
+        font-size: 1.4em;
+        line-height: 1.5;
+        color: #333;
+    }
+
+    .delete-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: transparent;
+        border: none;
+        font-size: 1.5em;
+        color: #ff4d4f;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .delete-btn:hover {
+        color: #d93025;
+    }
+
+    /* Yellow Background for Active Note */
+    textarea:focus {
+        background-color: #fff4b2;
+    }
+
+    /* Animations */
+    .note {
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: fadeInUp 0.5s forwards;
+    }
+
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
+
 </body>
 </html>
+
